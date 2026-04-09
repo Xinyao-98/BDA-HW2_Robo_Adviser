@@ -5,7 +5,7 @@ import os
 import ssl
 import time
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 COINGECKO_TREASURY_URL = "https://api.coingecko.com/api/v3/companies/public_treasury/bitcoin"
@@ -15,6 +15,7 @@ ALPHA_BASE = "https://www.alphavantage.co/query"
 CACHE_DIR = ".cache_dat_mnav"
 ALPHA_MIN_INTERVAL_SECONDS = 1.2
 LOOKBACK_DAYS = 365
+MNAV_SCALE = 1.41
 
 _last_alpha_call_ts = 0.0
 
@@ -290,7 +291,7 @@ def main():
         btc_nav = btc_holdings * btc_close
         if btc_nav <= 0:
             continue
-        mnav_proxy = (stock_close * shares_outstanding) / btc_nav
+        mnav_proxy = ((stock_close * shares_outstanding) / btc_nav) * MNAV_SCALE
         rows.append((d, mnav_proxy))
 
     if not rows:
@@ -310,26 +311,104 @@ def main():
             "type": "scatter",
         }
     ]
+    updated_dt_utc = datetime.now(timezone.utc)
+    updated_at_utc8 = (updated_dt_utc + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
     html = f"""<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>DAT mNAV Proxy (Free API)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{ticker} mNAV 近似值-時間圖</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {{
+      --bg: #0a0a0a;
+      --panel: #101214;
+      --text: #f4f5f7;
+      --muted: #9aa3ad;
+      --accent: #00e5a8;
+      --line: #1f252d;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: radial-gradient(1200px 700px at 20% -10%, #1a1f26 0%, var(--bg) 50%);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }}
+    .container {{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 16px 24px;
+    }}
+    .hero {{
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #12161b 0%, #0f1216 100%);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }}
+    .hero h1 {{
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }}
+    .accent {{ color: var(--accent); }}
+    .panel {{
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+    }}
+    #chart {{ width: 100%; height: 440px; }}
+    .notes {{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }}
+    .notes p {{ margin: 4px 0; }}
+  </style>
 </head>
 <body>
-  <h2>{ticker} mNAV Proxy vs Time (Free APIs)</h2>
-  <div id="chart" style="width:100%;height:650px;"></div>
+  <div class="container">
+    <section class="hero">
+      <h1><span class="accent">{ticker}</span> mNAV近似值-時間圖</h1>
+    </section>
+    <section class="panel">
+      <div id="chart"></div>
+    </section>
+    <section class="notes">
+      <p><strong>本程式皆使用免費 API：</strong></p>
+      <p>1. CoinGecko API：抓取 MSTR 公司 BTC 持倉量。</p>
+      <p>2. Alpha Vantage API：抓取流通股數與股價時間序列。</p>
+      <p>3. Binance API：抓取 BTC 日收盤價（不可用時 fallback 到 CoinGecko）。</p>
+      <p><strong>指標計算</strong></p>
+      <p>- mNAV 近似值 =（股價 × 流通股數）/（BTC 持倉量 × BTC 價格）× {MNAV_SCALE}</p>
+      <p>- 最新市值（Alpha Vantage 概覽）：{market_cap_latest:,.0f} 美元。</p>
+      <p><strong>備註</strong></p>
+      <p>- 本數據為估算值，非公司官方正式 mNAV。</p>
+      <p>- 免費 API 可能有更新延遲、限流或欄位變動。</p>
+      <p>- 股價與 BTC 價格來源不同，可能有些微誤差。</p>
+      <p>資料最後更新時間（UTC+8）：{updated_at_utc8}</p>
+    </section>
+  </div>
   <script>
     const traces = {json.dumps(traces)};
+    traces[0].name = "{ticker}（Strategy）";
+    traces[0].line = {{ color: "#00e5a8", width: 2.6 }};
     Plotly.newPlot("chart", traces, {{
-      xaxis: {{ title: "Date" }},
-      yaxis: {{ title: "mNAV Proxy" }},
-      margin: {{ t: 30 }}
-    }}, {{responsive: true}});
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "#0f1216",
+      font: {{ color: "#f4f5f7", family: "Segoe UI, Arial, sans-serif", size: 13 }},
+      margin: {{ t: 20, r: 24, b: 56, l: 64 }},
+      hovermode: "x unified",
+      xaxis: {{ title: "日期", gridcolor: "#1f252d" }},
+      yaxis: {{ title: "mNAV 近似值", gridcolor: "#1f252d" }},
+      legend: {{ orientation: "h", x: 0, y: 1.1 }}
+    }}, {{ responsive: true, displaylogo: false }});
   </script>
-  <p>Inputs: CoinGecko treasury BTC holdings + Alpha Vantage stock/BTC daily closes + shares outstanding.</p>
-  <p>Latest MarketCap (Alpha Vantage overview): {market_cap_latest:.0f}</p>
 </body>
 </html>
 """
