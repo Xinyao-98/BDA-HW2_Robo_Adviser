@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 COINGECKO_TREASURY_URL = "https://api.coingecko.com/api/v3/companies/public_treasury/bitcoin"
 BINANCE_BTC_CHART_URL = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1000"
+COINGECKO_BTC_CHART_URL = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365"
 ALPHA_BASE = "https://www.alphavantage.co/query"
 CACHE_DIR = ".cache_dat_mnav"
 ALPHA_MIN_INTERVAL_SECONDS = 1.2
@@ -172,24 +173,46 @@ def get_stock_daily_close(ticker: str, api_key: str) -> dict:
 
 def get_btc_daily_close(api_key: str) -> dict:
     del api_key  # BTC price now comes from Binance public endpoint.
-    data = load_cached_json("binance_btc_klines.json")
-    if data is None:
-        data = fetch_json(BINANCE_BTC_CHART_URL)
-        save_cached_json("binance_btc_klines.json", data)
-
-    if not isinstance(data, list) or not data:
-        raise RuntimeError("Cannot get BTC time series from Binance klines endpoint.")
-
+    # Source priority:
+    # 1) Binance (fast, no key) - can be region-blocked in CI (HTTP 451)
+    # 2) CoinGecko market_chart fallback (no key)
     out = {}
-    for item in data:
+
+    # Try Binance first
+    try:
+        data = load_cached_json("binance_btc_klines.json")
+        if data is None:
+            data = fetch_json(BINANCE_BTC_CHART_URL)
+            save_cached_json("binance_btc_klines.json", data)
+
+        if isinstance(data, list) and data:
+            for item in data:
+                if not isinstance(item, list) or len(item) < 5:
+                    continue
+                ts_ms, price = item[0], item[4]  # close price
+                day = datetime.utcfromtimestamp(float(ts_ms) / 1000.0).strftime("%Y-%m-%d")
+                out[day] = float(price)
+        if out:
+            return out
+    except Exception as e:
+        print(f"[WARN] Binance BTC source unavailable: {e}")
+
+    # Fallback to CoinGecko
+    data = load_cached_json("coingecko_btc_market_chart.json")
+    if data is None:
+        data = fetch_json(COINGECKO_BTC_CHART_URL)
+        save_cached_json("coingecko_btc_market_chart.json", data)
+
+    prices = data.get("prices", []) if isinstance(data, dict) else []
+    for item in prices:
         if not isinstance(item, list) or len(item) < 2:
             continue
-        ts_ms, price = item[0], item[4]  # close price
+        ts_ms, price = item[0], item[1]
         day = datetime.utcfromtimestamp(float(ts_ms) / 1000.0).strftime("%Y-%m-%d")
         out[day] = float(price)
 
     if not out:
-        raise RuntimeError("Binance BTC time series parsed as empty.")
+        raise RuntimeError("Cannot get BTC time series from both Binance and CoinGecko.")
     return out
 
 
