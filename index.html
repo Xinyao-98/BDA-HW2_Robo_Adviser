@@ -83,16 +83,178 @@
     const traces = [{"x": ["2025-11-12", "2025-11-13", "2025-11-14", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-28", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-26", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-02", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-06", "2026-04-07", "2026-04-08"], "y": [1.3240368897015393, 1.2535048653869387, 1.2653779090285473, 1.2698833521154977, 1.3330535398675767, 1.220658022100404, 1.2251368839958836, 1.2001670756668572, 1.2150282262889707, 1.1809808076408832, 1.1631844617293126, 1.1681330184704641, 1.1904691745835407, 1.1904226116948426, 1.2082833205174763, 1.2105345325349604, 1.2006828026713035, 1.2144783809962174, 1.2219557344472158, 1.2024373710324339, 1.187284962682399, 1.1713397256058753, 1.123702932533331, 1.1423620268453278, 1.1143517431811851, 1.108827183011595, 1.1205958047086058, 1.1110967052682195, 1.0813981146883125, 1.084808452353205, 1.0892178449390633, 1.067379230919411, 1.0538104314087557, 1.0388543304233187, 1.0464538067975002, 1.0516329287671635, 1.0097405479458108, 1.0614027760191937, 1.098290352119465, 1.0401178834122335, 1.064818327443329, 1.0864404992023333, 1.108394117500669, 1.0712351821026564, 1.0893988365868217, 1.0858072838247923, 1.0973221653270617, 1.077101148814676, 1.0908583707137167, 1.0891715890462186, 1.084866827387878, 1.063256102453441, 1.0136358367460303, 1.0646917300692698, 1.06264461305811, 1.0538974864773447, 1.0572588955052116, 1.019111071004787, 1.145571807758463, 1.1827835168482923, 1.1577097525661586, 1.1261582811488668, 1.1121694744639892, 1.165155344230439, 1.1422151909202465, 1.1288455050852755, 1.1577109088473876, 1.1545091641054521, 1.1465497135772076, 1.1656698259612464, 1.1955956535906627, 1.1845256506021773, 1.1780543036600273, 1.1983815615807616, 1.1634299754985404, 1.2075939108082432, 1.1818052070306926, 1.1747335904387635, 1.2167331861163613, 1.1861569697843832, 1.1809368561120381, 1.1666763345892404, 1.1799679846258337, 1.1804702162663172, 1.218424983378208, 1.182211068088863, 1.1845877783221876, 1.1529053445976216, 1.1679368230216518, 1.1571643760759487, 1.1687075659496764, 1.1574531758707993, 1.1372482960453658, 1.0894302895568437, 1.0951904031516768, 1.0801617762887485, 1.0733060415590678, 1.1112887223145071, 1.0307700738412446, 1.0817771889787156], "name": "MSTR", "mode": "lines", "type": "scatter"}];
     traces[0].name = "MSTR（Strategy）";
     traces[0].line = { color: "#00e5a8", width: 2.6 };
-    Plotly.newPlot("chart", traces, {
+    const X_MIN = traces[0].x[0];
+    const X_MAX = traces[0].x[traces[0].x.length - 1];
+    const Y_MIN = 0.0;
+    const Y_MAX = 2.0;
+    const Y_DEFAULT_MIN = 0.85;
+    const Y_DEFAULT_MAX = 1.38;
+
+    function clampXRange(x0, x1) {
+      const minTs = new Date(X_MIN).getTime();
+      const maxTs = new Date(X_MAX).getTime();
+      let a = Math.min(new Date(x0).getTime(), new Date(x1).getTime());
+      let b = Math.max(new Date(x0).getTime(), new Date(x1).getTime());
+      const span = b - a;
+      if (a < minTs) {
+        a = minTs;
+        b = minTs + span;
+      }
+      if (b > maxTs) {
+        b = maxTs;
+        a = maxTs - span;
+      }
+      a = Math.max(minTs, a);
+      b = Math.min(maxTs, b);
+      return [new Date(a).toISOString().slice(0, 10), new Date(b).toISOString().slice(0, 10)];
+    }
+
+    function clampYRange(y0, y1) {
+      let a = Math.min(y0, y1);
+      let b = Math.max(y0, y1);
+      const span = b - a;
+      if (a < Y_MIN) {
+        a = Y_MIN;
+        b = Y_MIN + span;
+      }
+      if (b > Y_MAX) {
+        b = Y_MAX;
+        a = Y_MAX - span;
+      }
+      a = Math.max(Y_MIN, a);
+      b = Math.min(Y_MAX, b);
+      if (a === b) b = Math.min(Y_MAX, a + 0.000001);
+      return [a, b];
+    }
+
+    function zoomX(gd, factor) {
+      const xr = gd.layout.xaxis.range || gd._fullLayout.xaxis.range;
+      if (!xr || xr.length !== 2) return;
+      const x0 = new Date(xr[0]).getTime();
+      const x1 = new Date(xr[1]).getTime();
+      const center = (x0 + x1) / 2;
+      const half = ((x1 - x0) / 2) * factor;
+      const [nx0, nx1] = clampXRange(
+        new Date(center - half).toISOString().slice(0, 10),
+        new Date(center + half).toISOString().slice(0, 10)
+      );
+      Plotly.relayout(gd, { "xaxis.range": [nx0, nx1] });
+    }
+
+    function zoomY(gd, factor) {
+      const yr = gd.layout.yaxis.range || gd._fullLayout.yaxis.range;
+      if (!yr || yr.length !== 2) return;
+      const y0 = Number(yr[0]);
+      const y1 = Number(yr[1]);
+      const center = (y0 + y1) / 2;
+      const half = ((y1 - y0) / 2) * factor;
+      const [ny0, ny1] = clampYRange(center - half, center + half);
+      Plotly.relayout(gd, { "yaxis.range": [ny0, ny1] });
+    }
+
+    // 自訂工具列圖示（16x16）
+    const ICON_H_OUT = {
+      width: 16,
+      height: 16,
+      path: "M1 8 L6 3 L6 6 L10 6 L10 10 L6 10 L6 13 Z M15 8 L10 3 L10 6 L6 6 L6 10 L10 10 L10 13 Z",
+      transform: "matrix(1 0 0 1 0 0)"
+    };
+    const ICON_H_IN = {
+      width: 16,
+      height: 16,
+      path: "M6 8 L1 3 L1 6 L5 6 L5 10 L1 10 L1 13 Z M10 8 L15 3 L15 6 L11 6 L11 10 L15 10 L15 13 Z",
+      transform: "matrix(1 0 0 1 0 0)"
+    };
+    const ICON_V_OUT = {
+      width: 16,
+      height: 16,
+      path: "M8 1 L3 6 L6 6 L6 10 L10 10 L10 6 L13 6 Z M8 15 L3 10 L6 10 L6 6 L10 6 L10 10 L13 10 Z",
+      transform: "matrix(1 0 0 1 0 0)"
+    };
+    const ICON_V_IN = {
+      width: 16,
+      height: 16,
+      path: "M8 6 L3 1 L6 1 L6 5 L10 5 L10 1 L13 1 Z M8 10 L3 15 L6 15 L6 11 L10 11 L10 15 L13 15 Z",
+      transform: "matrix(1 0 0 1 0 0)"
+    };
+
+    const layout = {
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "#0f1216",
       font: { color: "#f4f5f7", family: "Segoe UI, Arial, sans-serif", size: 13 },
       margin: { t: 20, r: 24, b: 56, l: 64 },
       hovermode: "x unified",
-      xaxis: { title: "日期", gridcolor: "#1f252d" },
-      yaxis: { title: "mNAV 近似值", gridcolor: "#1f252d" },
+      dragmode: "pan",
+      xaxis: { title: "日期", gridcolor: "#1f252d", range: [X_MIN, X_MAX] },
+      yaxis: { title: "mNAV 近似值", gridcolor: "#1f252d", range: [Y_DEFAULT_MIN, Y_DEFAULT_MAX], autorange: false },
       legend: { orientation: "h", x: 0, y: 1.1 }
-    }, { responsive: true, displaylogo: false });
+    };
+
+    const config = {
+      responsive: true,
+      displaylogo: false,
+      scrollZoom: true,
+      modeBarButtonsToRemove: ["zoomIn2d", "zoomOut2d"],
+      modeBarButtonsToAdd: [
+        {
+          name: "水平伸縮+",
+          title: "水平伸縮+",
+          icon: ICON_H_OUT,
+          click: (gd) => zoomX(gd, 0.8)
+        },
+        {
+          name: "水平伸縮-",
+          title: "水平伸縮-",
+          icon: ICON_H_IN,
+          click: (gd) => zoomX(gd, 1.25)
+        },
+        {
+          name: "垂直伸縮+",
+          title: "垂直伸縮+",
+          icon: ICON_V_OUT,
+          click: (gd) => zoomY(gd, 0.8)
+        },
+        {
+          name: "垂直伸縮-",
+          title: "垂直伸縮-",
+          icon: ICON_V_IN,
+          click: (gd) => zoomY(gd, 1.25)
+        }
+      ]
+    };
+
+    Plotly.newPlot("chart", traces, layout, config).then((gd) => {
+      gd.on("plotly_relayout", (ev) => {
+        let x0 = null, x1 = null, y0 = null, y1 = null;
+        if (ev["xaxis.range[0]"] !== undefined && ev["xaxis.range[1]"] !== undefined) {
+          x0 = ev["xaxis.range[0]"]; x1 = ev["xaxis.range[1]"];
+        } else if (Array.isArray(ev["xaxis.range"]) && ev["xaxis.range"].length === 2) {
+          x0 = ev["xaxis.range"][0]; x1 = ev["xaxis.range"][1];
+        }
+        if (ev["yaxis.range[0]"] !== undefined && ev["yaxis.range[1]"] !== undefined) {
+          y0 = Number(ev["yaxis.range[0]"]); y1 = Number(ev["yaxis.range[1]"]);
+        } else if (Array.isArray(ev["yaxis.range"]) && ev["yaxis.range"].length === 2) {
+          y0 = Number(ev["yaxis.range"][0]); y1 = Number(ev["yaxis.range"][1]);
+        }
+        const patch = {};
+        let needPatch = false;
+        if (x0 !== null && x1 !== null) {
+          const [cx0, cx1] = clampXRange(x0, x1);
+          if (String(cx0) !== String(x0) || String(cx1) !== String(x1)) {
+            patch["xaxis.range"] = [cx0, cx1];
+            needPatch = true;
+          }
+        }
+        if (y0 !== null && y1 !== null && !Number.isNaN(y0) && !Number.isNaN(y1)) {
+          const [cy0, cy1] = clampYRange(y0, y1);
+          if (Math.abs(cy0 - y0) > 1e-9 || Math.abs(cy1 - y1) > 1e-9) {
+            patch["yaxis.range"] = [cy0, cy1];
+            needPatch = true;
+          }
+        }
+        if (needPatch) Plotly.relayout(gd, patch);
+      });
+    });
   </script>
 </body>
 </html>
