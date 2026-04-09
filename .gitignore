@@ -1,0 +1,3 @@
+*.txt
+.cache_dat_mnav/
+*.py
