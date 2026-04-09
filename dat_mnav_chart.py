@@ -383,14 +383,15 @@ def main():
       <p><strong>本程式皆使用免費 API：</strong></p>
       <p>1. CoinGecko API：抓取 MSTR 公司 BTC 持倉量。</p>
       <p>2. Alpha Vantage API：抓取流通股數與股價時間序列。</p>
-      <p>3. Binance API：抓取 BTC 日收盤價（不可用時 fallback 到 CoinGecko）。</p>
+      <p>3. Binance API：抓取 BTC 日收盤價（失敗時改用 CoinGecko）。</p>
       <p><strong>指標計算</strong></p>
       <p>- mNAV 近似值 =（股價 × 流通股數）/（BTC 持倉量 × BTC 價格）× {MNAV_SCALE}</p>
+      <p>- 此算法和 Strategy.com 提供的 mNAV 數據趨勢相似，但數值約相差 {MNAV_SCALE} 倍，故在算式尾部乘上 {MNAV_SCALE}</p>
       <p>- 最新市值（Alpha Vantage 概覽）：{market_cap_latest:,.0f} 美元。</p>
       <p><strong>備註</strong></p>
-      <p>- 本數據為估算值，非公司官方正式 mNAV。</p>
-      <p>- 免費 API 可能有更新延遲、限流或欄位變動。</p>
-      <p>- 股價與 BTC 價格來源不同，可能有些微誤差。</p>
+      <p>- 由於免費 API 無法順利取得官方正式 mNAV，於是改以蒐集其他指標來估算，並非完全準確。</p>
+      <p>- 免費 API 可能有更新延遲、限流或欄位變動等問題，產生誤差。</p>
+      <p>- 另外，股價與 BTC 價格來源不同，也可能造成些微誤差。</p>
       <p>資料最後更新時間（UTC+8）：{updated_at_utc8}</p>
     </section>
   </div>

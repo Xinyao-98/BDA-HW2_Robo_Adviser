@@ -1,2 +1,4 @@
 *.txt
 .cache_dat_mnav/
+*.docx
+*.tmp
