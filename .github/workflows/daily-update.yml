@@ -1,0 +1,42 @@
+name: Daily mNAV Update
+
+on:
+  schedule:
+    # Daily at 00:10 UTC (08:10 in Taiwan, UTC+8)
+    - cron: "10 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run updater
+        env:
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+        run: |
+          python dat_mnav_chart.py \
+            --api-key "$ALPHAVANTAGE_API_KEY" \
+            --ticker MSTR \
+            --output-html index.html \
+            --output-csv dat_mnav_free.csv \
+            --no-cache
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html dat_mnav_free.csv
+          git diff --staged --quiet || git commit -m "chore: daily update mNAV data"
+          git push
